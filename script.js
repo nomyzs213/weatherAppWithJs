@@ -1,4 +1,8 @@
-const apiKey = CONFIG.API_KEY;
+const apiKey = globalThis.APP_CONFIG?.API_KEY;
+
+if (!apiKey) {
+    throw new Error("Brak API_KEY. Dodaj klucz w pliku .env/config.js");
+}
 
 navigator.geolocation.getCurrentPosition((position) => {
     const lat = position.coords.latitude;
@@ -62,4 +66,86 @@ const loadWeather = (data) => {
 
     document.getElementById("weather-icon").src = iconPath;
     
+}
+const city = document.getElementById("searchCity");
+
+city.addEventListener("keydown", (e) => {
+    if (e.key === "Enter") {
+        const cityName = city.value.trim();
+        if (!cityName) {
+            alert("Wpisz nazwę miasta.");
+            return;
+        }
+
+        const hourlyWeatherHTTPS = `https://api.openweathermap.org/data/2.5/forecast?q=${encodeURIComponent(cityName)}&appid=${apiKey}&units=metric&lang=pl`;
+
+        fetch(hourlyWeatherHTTPS)
+            .then(response => response.json())
+            .then(data => {
+                if (String(data.cod) !== "200") throw new Error(data.message || "Nieznany błąd API pogodowego.");
+                loadHourlyWeather(data);
+
+            })
+            .catch(error => {
+                console.error("Error fetching weather data:" , error);
+                alert(`Nie można pobrać danych pogodowych: ${error.message}`);
+            });
+        
+        const todayWeatherHTTPS = `https://api.openweathermap.org/data/2.5/weather?q=${encodeURIComponent(cityName)}&appid=${apiKey}&units=metric&lang=pl`;
+
+        fetch(todayWeatherHTTPS)
+            .then(response => response.json())
+            .then(data => {
+                if (String(data.cod) !== "200") throw new Error(data.message || "Nieznany błąd API pogodowego.");
+                loadWeather(data);
+
+            })
+            .catch(error => {
+                console.error("Error fetching weather data:" , error);
+                alert(`Nie można pobrać danych pogodowych: ${error.message}`);
+            });
+    }
+});
+
+
+const loadHourlyWeather = (data) => {
+    const weather = data;
+    console.log(weather);
+    const weatherList = weather.list.slice(0 , 30);
+    weatherList.forEach(el => {
+        const container = document.getElementById("hourlyWeatherContainer");
+        container.style.display = "flex";
+        
+        const weatherDiv = document.createElement("div");
+
+        container.appendChild(weatherDiv);
+        weatherDiv.classList.add("hourlyWeatherList")
+
+        const tempEl = document.createElement("h3")
+        const timeEl = document.createElement("h3")
+        const dateEl = document.createElement("h4");
+        const dayOfWeek = document.createElement("h4");
+        const weatherImg = document.createElement("img")
+
+        const weatherIcon = "https://openweathermap.org/img/wn/" + el.weather[0].icon + "@2x.png";
+        weatherImg.src =  weatherIcon;
+        tempEl.textContent = el.main.temp + "°C";
+        timeEl.textContent = el.dt_txt.split(" ")[1]?.slice(0, 5) || "";
+        dateEl.textContent = el.dt_txt.split(" ")[0];
+        
+        const date = new Date(el.dt_txt.split(" ")[0]) ;
+        const dayName = date.toLocaleDateString('pl-PL', { weekday: 'long' });
+        dayOfWeek.textContent = dayName;
+
+        weatherDiv.appendChild(tempEl);
+        weatherDiv.appendChild(weatherImg);
+        weatherDiv.append(timeEl);
+        weatherDiv.append(dateEl);
+        weatherDiv.append(dayOfWeek)
+        
+
+
+    });
+    
+
 }

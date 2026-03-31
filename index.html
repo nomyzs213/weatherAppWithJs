@@ -11,6 +11,7 @@
 </head>
 <body>
     <h1>Pogoda teraz</h1>
+    <input type="text" id="searchCity" placeholder="wyszukaj miasto"> 
     <div id="weather-container">
         <img id="weather-icon" src="" alt="obecna pogoda">
         
@@ -25,6 +26,8 @@
         
     </div>
     
+    <div id="hourlyWeatherContainer"> </div>
+
     <div id="weather-stats">
 
         <div class="stats">
@@ -54,7 +57,7 @@
 
     </div>
 
-    <script src="config.js"></script>
+    <script src=".env/config.js"></script>
     <script src="script.js"></script>
 </body>
 </html>
