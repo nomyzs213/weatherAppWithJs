@@ -76,7 +76,7 @@ city.addEventListener("keydown", (e) => {
             alert("Wpisz nazwę miasta.");
             return;
         }
-        city.value = ""
+        city.value = "" 
         const hourlyWeatherHTTPS = `https://api.openweathermap.org/data/2.5/forecast?q=${encodeURIComponent(cityName)}&appid=${apiKey}&units=metric&lang=pl`;
 
         fetch(hourlyWeatherHTTPS)
