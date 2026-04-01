@@ -1,4 +1,5 @@
 const apiKey = globalThis.APP_CONFIG?.API_KEY;
+const defaultCity = "Warszawa";
 
 if (!apiKey) {
     throw new Error("Brak API_KEY. Dodaj klucz w pliku .env/config.js");
@@ -22,14 +23,52 @@ navigator.geolocation.getCurrentPosition((position) => {
             console.error("Error fetching weather data:", error);
             alert(`Nie można pobrać danych pogodowych: ${error.message}`);
         });
+
+        const hourlyWeatherHTTPS = `https://api.openweathermap.org/data/2.5/forecast?lat=${lat}&lon=${lon}&appid=${apiKey}&units=metric&lang=pl`;
+
+        fetch(hourlyWeatherHTTPS)
+            .then(response => response.json())
+            .then(data => {
+                if (String(data.cod) !== "200") throw new Error(data.message || "Nieznany błąd API pogodowego.");
+                loadHourlyWeather(data);
+
+            })
+            .catch(error => {
+                console.error("Error fetching weather data:" , error);
+                alert(`Nie można pobrać danych pogodowych: ${error.message}`);
+            });
+
+
 }, (error) => {
     console.error("Geolocation error:", error);
-    alert("Brak dostępu do lokalizacji. Zezwól na geolokalizację w przeglądarce.");
+    alert("Nie można pobrać lokalizacji. Wyświetlane będą dane dla domyślnego miasta: " + defaultCity);
+    const todayWeatherHTTPS = `https://api.openweathermap.org/data/2.5/weather?q=${encodeURIComponent(defaultCity)}&appid=${apiKey}&units=metric&lang=pl`;
+    fetch(todayWeatherHTTPS)
+        .then(response => response.json())
+        .then(data => {
+            if (String(data.cod) !== "200") throw new Error(data.message || "Nieznany błąd API pogodowego.");
+            loadWeather(data);
+        })
+        .catch(fetchError => {
+            console.error("Error fetching weather data:", fetchError);
+            alert(`Nie można pobrać danych pogodowych: ${fetchError.message}`);
+        });
+
+    const hourlyWeatherHTTPS = `https://api.openweathermap.org/data/2.5/forecast?q=${encodeURIComponent(defaultCity)}&appid=${apiKey}&units=metric&lang=pl`;
+    fetch(hourlyWeatherHTTPS)
+        .then(response => response.json())
+        .then(data => {
+            if (String(data.cod) !== "200") throw new Error(data.message || "Nieznany błąd API pogodowego.");
+            loadHourlyWeather(data);
+        })
+        .catch(fetchError => {
+            console.error("Error fetching weather data:", fetchError);
+            alert(`Nie można pobrać danych pogodowych: ${fetchError.message}`);
+        });
 });
 
 const loadWeather = (data) => {
     const weather = data;
-    console.log(weather);
     setInterval( () => {
         const currTime = new Date().toLocaleTimeString('pl-PL');
         document.getElementById("current-time").textContent = currTime;
@@ -67,9 +106,10 @@ const loadWeather = (data) => {
     document.getElementById("weather-icon").src = iconPath;
     
 }
+
 const city = document.getElementById("searchCity");
 
-city.addEventListener("keydown", (e) => {
+city?.addEventListener("keydown", (e) => {
     if (e.key === "Enter") {
         const cityName = city.value.trim();
         if (!cityName) {
@@ -110,8 +150,8 @@ city.addEventListener("keydown", (e) => {
 
 const loadHourlyWeather = (data) => {
     const weather = data;
-    console.log(weather);
     const weatherList = weather.list.slice(0 , 30);
+
     weatherList.forEach(el => {
         const container = document.getElementById("hourlyWeatherContainer");
         container.style.display = "flex";
